@@ -81,6 +81,39 @@ When a test rule logs data to a file, by default, the file location uses a direc
 structure composed of the test class package, test class name, test method name, and test iteration
 number.
 
+Important: As with most performance tooling the monitoring of the system will have varying effects
+on the system. Therefore, when interpreting the data from the rules it is suggested that you keep
+as many system variables constant as possible. It wouldn't make sense for you to compare data from
+different devices or major Android versions, for instance. It would make sense for you to collect
+performance data, make a change, then determine if that change improved overall system performance
+prior to committing the change to source control.
+
+Quick summary of the Logging Rules:
+    EnableTestTracingRule calls the Trace#beginSection and Trace#endSection methods before and
+        after each test. This records the start and end of the tests in Systrace output to give you
+        more context when debugging a performance trace.
+    LogGraphicsStatsRule collects a graphics subsystem dumpsys output after each test. On Android
+        Marshmallow+ this includes a "Janky" percentage summary which can be monitored in a
+        post processing script to programmatically detect jank above acceptable thresholds.
+    LogLogcatRule resets the Logcat buffer on the device prior to running a test and then extracts
+        the buffer after a test. This is useful when researching a regression failure or when
+        wanting to see Logcat output for a specific test as it ran on a device.
+    LogNetStatsRule dumps the current and historical network information using dumpsys. This can be
+        useful context when debugging networking related issues. For instance, if a file download
+        test failed you might double check to see if the network became unavailable during a test
+        run before wasting time digging into the issue.
+    LogBatteryInformationRule resets the battery stats before a test and collects the battery
+        information after a test. This should be used for large or long running test suites since
+        battery stats are affected by various things that could be happening on the system.
+    LogDeviceGetPropInfoRule collects the results of running `getprops` on the Android device. These
+        properties contain Android and device configuration information. If you have tests that
+        pass on some devices but not others this file might be helpful in identifying the issue.
+        For instance, if there was a bug in your code that only presented in devices using the Art
+        runtime you might be able to uncover that with this output and post-test analysis tools
+        since this file specifies whether Art or Dalvik is in use (among many other things).
+    Coming soon: An atrace logger which collects raw system atraces which can be converted to
+        systrace html files to perform performance analysis on tests in a test suite.
+
 Usage: In order to use the Logging Rules add them to your test class as shown below then add the
 Gradle snippet to your project's `build.gradle` file. The Gradle snippet will extract the log files
 after a test suite is run.
@@ -102,6 +135,6 @@ public void testWithLogcatRule() {
 {% endhighlight %}
 
 Example Gradle snippet that extracts the directory the Rules are logging to.
-{% highlight gradle %}
+{% highlight java %}
 TBD
 {% endhighlight %}
